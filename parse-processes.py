@@ -3,6 +3,27 @@ from pathlib import Path
 import ast
 import json
 from pprint import pprint
+from lxml import etree, html 
+
+
+def update_index(paths):
+    root = html.parse("index.template.html")
+    body = root.find(".//body")
+
+    comm = etree.Comment("Automatically parsed processnodes")
+    comm.tail = "\n    "
+    body.append(comm)
+    for path in paths:
+        script = etree.Element("script")
+        script.attrib["type"] = "text/javascript"
+        script.attrib["src"] = f"{path}"
+        script.tail = "\n    "
+        body.append(script)
+
+    index_str = html.tostring(root, pretty_print=True)
+
+    with open("index.html", "wb") as f:
+        f.write(index_str)
 
 
 def create_process_node(path, descr, iparams, oparams):
@@ -193,3 +214,5 @@ if __name__ == "__main__":
     for p in notparsed:
         line += f"{str(p.parents[0].name)} {str(p.name)}\n"
     Path("not-parsed.dat").write_text(line)
+
+    update_index(parsed)
